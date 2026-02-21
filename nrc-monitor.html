@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NRC Monitor">
+  <title>NRC Plant Monitor</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function NuclearPlantStatus() {
+      const [plants, setPlants] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+      const [lastUpdate, setLastUpdate] = useState(null);
+
+      const fetchPlantStatus = async () => {
+        setLoading(true);
+        setError(null);
+        
+        try {
+          // Simulate API delay
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Sample data based on actual NRC status report format
+          // In production, this would fetch from NRC.gov (requires backend proxy)
+          const sampleData = [
+            { name: 'Palisades', power: 0, region: 'Region 3', status: 'offline' },
+            { name: 'Hatch 2', power: 68, region: 'Region 2', status: 'reduced' },
+            { name: 'LaSalle 1', power: 92, region: 'Region 3', status: 'reduced' },
+            { name: 'Waterford 3', power: 94, region: 'Region 4', status: 'reduced' },
+            { name: 'Susquehanna 1', power: 95, region: 'Region 1', status: 'reduced' },
+            { name: 'Hatch 1', power: 96, region: 'Region 2', status: 'reduced' },
+            { name: 'Fermi 2', power: 97, region: 'Region 3', status: 'reduced' }
+          ];
+          
+          setPlants(sampleData.sort((a, b) => a.power - b.power));
+          setLastUpdate(new Date());
+          setLoading(false);
+        } catch (err) {
+          console.error('Fetch error:', err);
+          setError(`Failed to fetch plant status data: ${err.message}`);
+          setLoading(false);
+        }
+      };
+
+      useEffect(() => {
+        fetchPlantStatus();
+      }, []);
+
+      const RefreshCw = ({ size, style }) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={style}>
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+      );
+
+      const Activity = ({ size, style }) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={style}>
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+      );
+
+      const Radio = ({ size, style }) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={style}>
+          <circle cx="12" cy="12" r="2"></circle>
+          <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"></path>
+        </svg>
+      );
+
+      const Zap = ({ size, color, style }) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" style={style}>
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+      );
+
+      return (
+        <div style={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%)',
+          fontFamily: '"JetBrains Mono", "Courier New", monospace',
+          color: '#e0e6ed',
+          padding: '2rem',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {/* Animated background grid */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage: `
+              linear-gradient(rgba(0, 255, 135, 0.03) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(0, 255, 135, 0.03) 1px, transparent 1px)
+            `,
+            backgroundSize: '40px 40px',
+            opacity: 0.4,
+            animation: 'gridPulse 4s ease-in-out infinite'
+          }} />
+          
+          {/* Radial glow effect */}
+          <div style={{
+            position: 'absolute',
+            top: '10%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '600px',
+            height: '600px',
+            background: 'radial-gradient(circle, rgba(96, 239, 255, 0.15) 0%, transparent 70%)',
+            filter: 'blur(60px)',
+            pointerEvents: 'none'
+          }} />
+
+          <style>{`
+            @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Orbitron:wght@700;900&display=swap');
+            
+            @keyframes gridPulse {
+              0%, 100% { opacity: 0.4; }
+              50% { opacity: 0.6; }
+            }
+            
+            @keyframes slideIn {
+              from {
+                opacity: 0;
+                transform: translateY(20px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+            
+            @keyframes rotate {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+            }
+            
+            .plant-card {
+              animation: slideIn 0.5s ease-out forwards;
+              opacity: 0;
+            }
+            
+            .power-bar {
+              transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+          `}</style>
+
+          <div style={{ 
+            maxWidth: '1200px', 
+            margin: '0 auto',
+            position: 'relative',
+            zIndex: 1
+          }}>
+            {/* Header */}
+            <div style={{ marginBottom: '3rem' }}>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '1rem',
+                marginBottom: '1rem'
+              }}>
+                <Radio size={48} style={{ 
+                  color: '#60efff',
+                  filter: 'drop-shadow(0 0 8px rgba(96, 239, 255, 0.6))'
+                }} />
+                <h1 style={{
+                  fontFamily: '"Orbitron", sans-serif',
+                  fontSize: '3rem',
+                  fontWeight: 900,
+                  margin: 0,
+                  background: 'linear-gradient(135deg, #60efff 0%, #00ff87 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '2px',
+                  textTransform: 'uppercase'
+                }}>
+                  NRC Plant Monitor
+                </h1>
+              </div>
+              
+              <p style={{ 
+                fontSize: '1.1rem', 
+                color: '#8b95a5',
+                margin: '0 0 1.5rem 0',
+                fontFamily: '"JetBrains Mono", monospace'
+              }}>
+                Real-time status of U.S. commercial nuclear reactors operating below full capacity
+              </p>
+              
+              <div style={{ 
+                display: 'flex', 
+                gap: '1rem',
+                alignItems: 'center',
+                flexWrap: 'wrap'
+              }}>
+                <button
+                  onClick={fetchPlantStatus}
+                  disabled={loading}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.5rem',
+                    background: loading ? '#2d3748' : 'linear-gradient(135deg, #00ff87 0%, #60efff 100%)',
+                    color: loading ? '#8b95a5' : '#0a0e27',
+                    border: '2px solid',
+                    borderColor: loading ? '#4a5568' : '#00ff87',
+                    borderRadius: '4px',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    fontFamily: '"JetBrains Mono", monospace',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    transition: 'all 0.3s',
+                    boxShadow: loading ? 'none' : '0 0 20px rgba(0, 255, 135, 0.3)'
+                  }}
+                >
+                  <RefreshCw 
+                    size={16} 
+                    style={{ 
+                      animation: loading ? 'rotate 1s linear infinite' : 'none'
+                    }} 
+                  />
+                  {loading ? 'Updating...' : 'Refresh Data'}
+                </button>
+                
+                {lastUpdate && (
+                  <div style={{
+                    padding: '0.75rem 1rem',
+                    background: 'rgba(0, 255, 135, 0.1)',
+                    border: '1px solid rgba(0, 255, 135, 0.3)',
+                    borderRadius: '4px',
+                    fontSize: '0.85rem',
+                    color: '#00ff87',
+                    fontFamily: '"JetBrains Mono", monospace'
+                  }}>
+                    Last update: {lastUpdate.toLocaleTimeString()}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Error State */}
+            {error && (
+              <div style={{
+                padding: '1.5rem',
+                background: 'rgba(96, 239, 255, 0.1)',
+                border: '2px solid #60efff',
+                borderRadius: '8px',
+                marginBottom: '2rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem'
+              }}>
+                <Activity size={24} color="#60efff" />
+                <span style={{ fontSize: '1rem' }}>{error}</span>
+              </div>
+            )}
+
+            {/* Loading State */}
+            {loading && !plants.length && (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '4rem',
+                color: '#8b95a5'
+              }}>
+                <Activity 
+                  size={48} 
+                  style={{ 
+                    animation: 'rotate 2s linear infinite',
+                    marginBottom: '1rem'
+                  }} 
+                />
+                <div style={{ fontSize: '1.2rem' }}>Retrieving plant status data...</div>
+              </div>
+            )}
+
+            {/* Statistics Banner */}
+            {!loading && plants.length > 0 && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '2rem',
+                marginBottom: '2rem',
+                padding: '1rem',
+                background: 'rgba(26, 31, 58, 0.4)',
+                border: '1px solid rgba(96, 239, 255, 0.2)',
+                borderRadius: '6px',
+                fontSize: '0.95rem',
+                fontFamily: '"JetBrains Mono", monospace'
+              }}>
+                <div style={{ color: '#8b95a5' }}>
+                  <span style={{ color: '#60efff', fontWeight: 700, fontSize: '1.1rem' }}>
+                    {plants.filter(p => p.status === 'offline').length}
+                  </span>
+                  {' '}Offline
+                </div>
+                <div style={{ color: '#8b95a5' }}>
+                  <span style={{ color: '#00bfff', fontWeight: 700, fontSize: '1.1rem' }}>
+                    {plants.filter(p => p.status === 'reduced').length}
+                  </span>
+                  {' '}Reduced Power
+                </div>
+                <div style={{ color: '#8b95a5' }}>
+                  <span style={{ color: '#00ff87', fontWeight: 700, fontSize: '1.1rem' }}>
+                    {(() => {
+                      // Calculate average power excluding Palisades (permanently offline)
+                      // Total of 94 operating commercial reactors in US
+                      const totalReactors = 94;
+                      const palisadesReactor = 1; // Palisades is permanently retired
+                      const activeReactors = totalReactors - palisadesReactor;
+                      
+                      // Sum of all power levels (plants not in list are at 100%)
+                      let totalPower = 0;
+                      const plantsMap = {};
+                      
+                      plants.forEach(plant => {
+                        // Don't count Palisades in the average
+                        if (plant.name !== 'Palisades') {
+                          plantsMap[plant.name] = plant.power;
+                          totalPower += plant.power;
+                        }
+                      });
+                      
+                      // All other reactors are at 100%
+                      const plantsInList = Object.keys(plantsMap).length;
+                      const plantsAt100 = activeReactors - plantsInList;
+                      totalPower += plantsAt100 * 100;
+                      
+                      const avgPower = totalPower / activeReactors;
+                      return avgPower.toFixed(1);
+                    })()}%
+                  </span>
+                  {' '}National Power
+                </div>
+              </div>
+            )}
+
+            {/* Plant List */}
+            {!loading && plants.length === 0 && !error && (
+              <div style={{
+                textAlign: 'center',
+                padding: '4rem',
+                background: 'rgba(0, 255, 135, 0.05)',
+                border: '2px solid rgba(0, 255, 135, 0.2)',
+                borderRadius: '8px'
+              }}>
+                <Zap size={64} color="#00ff87" style={{ marginBottom: '1rem' }} />
+                <div style={{ fontSize: '1.5rem', color: '#00ff87', marginBottom: '0.5rem' }}>
+                  All Systems Nominal
+                </div>
+                <div style={{ color: '#8b95a5', fontSize: '1rem' }}>
+                  All U.S. commercial nuclear reactors are operating at 100% power
+                </div>
+              </div>
+            )}
+
+            {!loading && plants.length > 0 && (
+              <div style={{
+                display: 'grid',
+                gap: '0.75rem'
+              }}>
+                {plants.map((plant, index) => (
+                  <div
+                    key={plant.name}
+                    className="plant-card"
+                    style={{
+                      padding: '1rem',
+                      background: 'linear-gradient(135deg, rgba(26, 31, 58, 0.6) 0%, rgba(15, 20, 25, 0.6) 100%)',
+                      border: '1px solid rgba(96, 239, 255, 0.3)',
+                      borderRadius: '6px',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      animationDelay: `${index * 0.1}s`,
+                      backdropFilter: 'blur(10px)'
+                    }}
+                  >
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '1rem',
+                      marginBottom: '0.5rem'
+                    }}>
+                      <h3 style={{
+                        margin: 0,
+                        fontSize: '1.1rem',
+                        fontWeight: 700,
+                        color: '#e0e6ed',
+                        fontFamily: '"Orbitron", sans-serif',
+                        letterSpacing: '0.5px',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {plant.name}
+                      </h3>
+                      
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        marginLeft: 'auto'
+                      }}>
+                        <div style={{
+                          padding: '0.3rem 0.6rem',
+                          background: plant.status === 'offline' 
+                            ? 'rgba(96, 239, 255, 0.15)' 
+                            : 'rgba(0, 191, 255, 0.15)',
+                          borderRadius: '4px',
+                          fontSize: '0.7rem',
+                          color: plant.status === 'offline' ? '#60efff' : '#00bfff',
+                          fontWeight: 600,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {plant.status === 'offline' ? 'Offline' : 'Reduced'}
+                        </div>
+                        
+                        <div style={{
+                          fontSize: '1.4rem',
+                          fontWeight: 700,
+                          fontFamily: '"Orbitron", sans-serif',
+                          color: plant.status === 'offline' ? '#60efff' : '#00bfff',
+                          whiteSpace: 'nowrap',
+                          minWidth: '70px',
+                          textAlign: 'right'
+                        }}>
+                          {plant.power}%
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Power Bar */}
+                    <div style={{
+                      height: '6px',
+                      background: 'rgba(139, 149, 165, 0.2)',
+                      borderRadius: '3px',
+                      overflow: 'hidden',
+                      position: 'relative'
+                    }}>
+                      <div
+                        className="power-bar"
+                        style={{
+                          height: '100%',
+                          width: `${plant.power}%`,
+                          background: plant.status === 'offline' 
+                            ? 'linear-gradient(90deg, #60efff 0%, #00bfff 100%)'
+                            : 'linear-gradient(90deg, #00bfff 0%, #00ff87 100%)',
+                          boxShadow: '0 0 8px rgba(96, 239, 255, 0.4)'
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Footer */}
+            <div style={{
+              marginTop: '4rem',
+              padding: '2rem',
+              textAlign: 'center',
+              color: '#4a5568',
+              fontSize: '0.85rem',
+              borderTop: '1px solid rgba(139, 149, 165, 0.2)'
+            }}>
+              <p style={{ margin: '0 0 0.5rem 0', color: '#60efff' }}>
+                ⚠️ Currently showing sample data (live fetch requires backend proxy due to CORS)
+              </p>
+              <p style={{ margin: '0 0 0.5rem 0' }}>
+                Data source: Nuclear Regulatory Commission (NRC)
+              </p>
+              <p style={{ margin: 0 }}>
+                Status collected between 4 AM - 8 AM EST daily | All times Eastern
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<NuclearPlantStatus />, document.getElementById('root'));
+  </script>
+</body>
+</html>
